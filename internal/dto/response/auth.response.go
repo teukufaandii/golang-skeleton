@@ -1,8 +1,8 @@
 package response
 
 import (
-	"time"
 	"golang-skeleton/internal/models"
+	"time"
 
 	"github.com/google/uuid"
 )
