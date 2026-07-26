@@ -1,0 +1,33 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+
+# Go workspace file
+go.work
+
+# Build artifacts
+bin/
+tmp/
+dist/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Air live reloading
+tmp/
+.air.toml
