@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"golang-skeleton/config"
 	"golang-skeleton/internal/dto/request"
 	"golang-skeleton/internal/dto/response"
 	"golang-skeleton/internal/models"
@@ -20,17 +22,24 @@ var (
 
 type AuthService interface {
 	Register(ctx context.Context, req *request.RegisterRequest) (*response.AuthResponse, error)
+	Login(ctx context.Context, req *request.LoginRequest) (*response.AuthResponse, error)
 }
 
 type authService struct {
-	userRepo  repository.UserRepository
-	jwtSecret string
+	userRepo         repository.UserRepository
+	redisRepo        repository.RedisRepository
+	jwtSecret        string
+	jwtAccessExpiry  time.Duration
+	jwtRefreshExpiry time.Duration
 }
 
-func NewAuthService(userRepo repository.UserRepository, jwtSecret string) AuthService {
+func NewAuthService(userRepo repository.UserRepository, redisRepo repository.RedisRepository, cfg *config.Config) AuthService {
 	return &authService{
-		userRepo:  userRepo,
-		jwtSecret: jwtSecret,
+		userRepo:         userRepo,
+		redisRepo:        redisRepo,
+		jwtSecret:        cfg.JWTSecret,
+		jwtAccessExpiry:  cfg.JWTAccessExpiry,
+		jwtRefreshExpiry: cfg.JWTRefreshExpiry,
 	}
 }
 
@@ -79,23 +88,26 @@ func (s *authService) Login(ctx context.Context, req *request.LoginRequest) (*re
 }
 
 func (s *authService) generateTokens(ctx context.Context, user *models.User) (*response.AuthResponse, error) {
-	accessToken, err := utils.GenerateToken(user.ID, user.Email, user.Role.Code, s.jwtSecret, 15*time.Minute)
+	accessToken, err := utils.GenerateToken(user.ID, user.Email, user.Role.Code, s.jwtSecret, s.jwtAccessExpiry)
 	if err != nil {
 		return nil, errors.New("failed to generate access token")
 	}
 
-	refreshToken, err := utils.GenerateToken(user.ID, user.Email, user.Role.Code, s.jwtSecret, 7*24*time.Hour)
+	refreshToken, err := utils.GenerateToken(user.ID, user.Email, user.Role.Code, s.jwtSecret, s.jwtRefreshExpiry)
 	if err != nil {
 		return nil, errors.New("failed to generate refresh token")
 	}
 
-	// create user token and save it in Redis
-	
+	// create user session token and save it in Redis
+	sessionKey := fmt.Sprintf("session:user:%s", user.ID.String())
+	if err := s.redisRepo.Set(ctx, sessionKey, refreshToken, s.jwtRefreshExpiry); err != nil {
+		return nil, errors.New("failed to save session to redis")
+	}
 
 	return &response.AuthResponse{
 		User:         *response.ToUserResponse(user),
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		ExpiresAt:    time.Now().Add(15 * time.Minute).Unix(),
+		ExpiresAt:    time.Now().Add(s.jwtAccessExpiry).Unix(),
 	}, nil
 }
