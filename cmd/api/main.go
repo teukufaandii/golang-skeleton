@@ -7,6 +7,7 @@ import (
 	"golang-skeleton/internal/routes"
 	services "golang-skeleton/internal/service"
 	database "golang-skeleton/pkg/database/postgre"
+	redis "golang-skeleton/pkg/database/redis"
 	"log"
 	"os"
 
@@ -30,8 +31,17 @@ func main() {
 	database.SeedDatabase(db)
 	database.CreateIndexes(db)
 
+	// redis connection init
+	redisClient, err := redis.NewRedisConn(cfg.RedisURL, cfg.RedisPassword, cfg.RedisDB)
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	defer redisClient.Close()
+
 	// repo connection
 	userRepo := repository.NewUserRepository(db)
+	redisRepo := repository.NewRedisRepository(redisClient)
+	_ = redisRepo
 
 	// service connection
 	authService := services.NewAuthService(*userRepo, cfg.JWTSecret)
