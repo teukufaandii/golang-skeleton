@@ -34,7 +34,7 @@ func Load() *Config {
 		Environment:    getEnv("ENVIRONMENT", "development"),
 		AllowedOrigins: getEnvSlice("ALLOWED_ORIGINS", []string{"http://localhost:3000"}),
 
-		DatabaseURL:     getEnv("DATABASE_URL", "postgres://postgres:postgres@db:5432/topup_game?sslmode=disable"),
+		DatabaseURL:     getEnv("DATABASE_URL", "postgres://postgres:postgres@db:5432/golang_skeleton?sslmode=disable"),
 		DatabaseMaxConn: getEnvInt("DATABASE_MAX_CONN", 25),
 		DatabaseMaxIdle: getEnvInt("DATABASE_MAX_IDLE", 5),
 
