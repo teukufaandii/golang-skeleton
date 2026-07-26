@@ -41,10 +41,9 @@ func main() {
 	// repo connection
 	userRepo := repository.NewUserRepository(db)
 	redisRepo := repository.NewRedisRepository(redisClient)
-	_ = redisRepo
 
 	// service connection
-	authService := services.NewAuthService(*userRepo, cfg.JWTSecret)
+	authService := services.NewAuthService(*userRepo, redisRepo, cfg)
 
 	// handler connection
 	authHandler := handler.NewAuthHandler(authService)
