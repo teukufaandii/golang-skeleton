@@ -44,7 +44,10 @@ func NewAuthService(userRepo repository.UserRepository, redisRepo repository.Red
 }
 
 func (s *authService) Register(ctx context.Context, req *request.RegisterRequest) (*response.AuthResponse, error) {
-	exists, _ := s.userRepo.ExistsByEmail(ctx, req.Email)
+	exists, err := s.userRepo.ExistsByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check email availability: %w", err)
+	}
 	if exists {
 		return nil, ErrEmailExists
 	}
@@ -99,7 +102,7 @@ func (s *authService) generateTokens(ctx context.Context, user *models.User) (*r
 	}
 
 	// create user session token and save it in Redis
-	sessionKey := fmt.Sprintf("session:user:%s", user.ID.String())
+	sessionKey := fmt.Sprintf("session:user:%s:%s", user.ID.String(), refreshToken)
 	if err := s.redisRepo.Set(ctx, sessionKey, refreshToken, s.jwtRefreshExpiry); err != nil {
 		return nil, errors.New("failed to save session to redis")
 	}
