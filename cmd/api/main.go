@@ -32,19 +32,16 @@ func main() {
 	database.CreateIndexes(db)
 
 	// redis connection init
-	redisClient, err := redis.NewRedisClient(redis.Config{
-		Addr:     cfg.RedisURL,
-		Password: cfg.RedisPassword,
-		DB:       cfg.RedisDB,
-	})
+	redisClient, err := redis.NewRedisConn(cfg.RedisURL, cfg.RedisPassword, cfg.RedisDB)
 	if err != nil {
-		log.Printf("Warning: Failed to connect to Redis: %v", err)
-	} else {
-		defer redisClient.Close()
+		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
+	defer redisClient.Close()
 
 	// repo connection
 	userRepo := repository.NewUserRepository(db)
+	redisRepo := repository.NewRedisRepository(redisClient)
+	_ = redisRepo
 
 	// service connection
 	authService := services.NewAuthService(*userRepo, cfg.JWTSecret)

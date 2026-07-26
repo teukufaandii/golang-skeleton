@@ -9,18 +9,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type Config struct {
-	Addr     string
-	Password string
-	DB       int
-}
-
-// NewRedisClient initializes and returns a new Redis client instance after testing the connection with Ping.
-func NewRedisClient(cfg Config) (*redis.Client, error) {
+func NewRedisConn(addr, password string, db int) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     cfg.Addr,
-		Password: cfg.Password,
-		DB:       cfg.DB,
+		Addr:     addr,
+		Password: password,
+		DB:       db,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

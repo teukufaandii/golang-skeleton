@@ -90,6 +90,7 @@ func (s *authService) generateTokens(ctx context.Context, user *models.User) (*r
 	}
 
 	// create user token and save it in Redis
+	
 
 	return &response.AuthResponse{
 		User:         *response.ToUserResponse(user),
